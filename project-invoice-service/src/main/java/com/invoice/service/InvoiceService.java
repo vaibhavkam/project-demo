@@ -23,6 +23,14 @@ public interface InvoiceService {
 	public Invoice saveInvoice(Invoice invoice) throws Exception;
 	
 	/**
+	 * Method to update invoice
+	 * @param invoice
+	 * @return Invoice
+	 * @throws Exception 
+	 */
+	public Invoice updateInvoice(Invoice invoice) throws Exception;
+	
+	/**
 	 * Method to get invoice by Id
 	 * @param id
 	 * @return Invoice
@@ -67,4 +75,5 @@ public interface InvoiceService {
 	 * @return Invoice
 	 */
 	public Invoice getInvoiceModelFromInvoiceEntity(InvoiceEntity invoiceEntity);
+
 }

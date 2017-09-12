@@ -246,11 +246,8 @@ public class InvoiceServiceTest {
 				.andReturn();
 		
 		Response response = objectMapper.readValue(result.getResponse().getContentAsString(), Response.class);
-		Assert.isTrue(response.getResponseType()==ResponseType.INVOICE,"Not a invoice response");
-		Invoice invoiceResult = objectMapper.convertValue(response.getObject(), Invoice.class);
-		
-		Assert.isTrue(invoiceResult.getId()>0, "Test failed while creating invoice");
-		Assert.isTrue(invoiceResult.getAmount()==0, "Test failed while creating invoice");
+		Assert.isTrue(response.getResponseType()==ResponseType.ERROR,"Not a error response");
+		Assert.isTrue(response.getResponseCode().equals(ResponseCode.CREATE_ERROR),"error occured while creating invoice with items having null created date");
 	}
 	
 	@Test
@@ -404,7 +401,7 @@ public class InvoiceServiceTest {
 		Assert.isTrue(invoiceReadResult.getCustomer().getId()==customer1.getId(), "Test failed due to expcetd and actual customer id mis-match");
 	}
 
-	@Test @Transactional
+	@Test
 	public void testUpdateInvoiceAddNewItems() throws Exception{
 		
 		Date date = new Date();
@@ -428,6 +425,7 @@ public class InvoiceServiceTest {
 		invoice.setAmount(0);
 		invoice.setCustomer(customer);
 		invoice.setCreatedDate(date);
+		invoice.addItem(item1);
 
 		MvcResult result = mvc.perform(post("/invoice")
 				.content(objectMapper.writeValueAsString(invoice))
@@ -441,9 +439,8 @@ public class InvoiceServiceTest {
 		Invoice invoiceCreateResult = objectMapper.convertValue(response.getObject(), Invoice.class);
 		
 		Assert.isTrue(invoiceCreateResult.getId()>0, "Test failed while creating invoice");
-		Assert.isTrue(invoiceCreateResult.getAmount()==0, "Test failed while creating invoice");
+		Assert.isTrue(invoiceCreateResult.getAmount()==10, "Test failed while creating invoice");
 				
-		invoiceCreateResult.addItem(item1);
 		invoiceCreateResult.addItem(item2);
 		
 		result = mvc.perform(put("/invoice")

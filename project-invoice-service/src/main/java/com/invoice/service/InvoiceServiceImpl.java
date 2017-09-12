@@ -44,19 +44,39 @@ public class InvoiceServiceImpl implements InvoiceService{
 	 */
 	@Override
 	public Invoice saveInvoice(Invoice invoice) throws Exception {
-		Response response = RestClient.getResourceById(invoice.getCustomer().getId(), ResponseType.CUSTOMER);
-		if(response.getResponseType()==ResponseType.CUSTOMER){
-			Customer customer = objectMapper.convertValue(response.getObject(), Customer.class);
-			if(customer.getId()==invoice.getCustomer().getId()){
+		
+		if(invoice.getItems()==null || invoice.getItems().size()==0)
+			throw new Exception("Invoice should contains atleast one item");
+		
+//		Response response = RestClient.getResourceById(invoice.getCustomer().getId(), ResponseType.CUSTOMER);
+//		if(response.getResponseType()==ResponseType.CUSTOMER){
+//			Customer customer = objectMapper.convertValue(response.getObject(), Customer.class);
+//			if(customer.getId()==invoice.getCustomer().getId()){
 				InvoiceEntity invoiceEntity = getInvoiceEntityFromInvoiceModel(invoice);
 				invoiceRepository.save(invoiceEntity);
 				invoice=getInvoice(invoiceEntity.getId());
 				return invoice;
-			}else
-				throw new Exception("Invalid customer attached to invoice");
-		}else
-			throw new Exception("Invalid response from customer service");
+//			}else
+//				throw new Exception("Invalid customer attached to invoice");
+//		}else
+//			throw new Exception("Invalid response from customer service");
 	}
+	
+	/**
+	 * Method to update invoice
+	 * @param invoice
+	 * @return Invoice
+	 * @throws Exception 
+	 */
+	@Override
+	public Invoice updateInvoice(Invoice invoice) throws Exception {
+		
+		InvoiceEntity invoiceEntity = getInvoiceEntityFromInvoiceModel(invoice);
+		invoiceRepository.save(invoiceEntity);
+		invoice=getInvoice(invoiceEntity.getId());
+		return invoice;
+	}
+
 	
 	/**
 	 * Method to get invoice by Id
@@ -169,13 +189,13 @@ public class InvoiceServiceImpl implements InvoiceService{
 		}
 		invoice.setAmount(invoiceAmount);
 		
-		Response response = RestClient.getResourceById(invoice.getCustomer().getId(), ResponseType.CUSTOMER);
-		if(response.getResponseType()==ResponseType.CUSTOMER){
-			Customer customerResult = objectMapper.convertValue(response.getObject(), Customer.class);
-			if(customerResult.getId()==invoice.getCustomer().getId()){
-				invoice.setCustomer(customerResult);
-			}
-		}
+//		Response response = RestClient.getResourceById(invoice.getCustomer().getId(), ResponseType.CUSTOMER);
+//		if(response.getResponseType()==ResponseType.CUSTOMER){
+//			Customer customerResult = objectMapper.convertValue(response.getObject(), Customer.class);
+//			if(customerResult.getId()==invoice.getCustomer().getId()){
+//				invoice.setCustomer(customerResult);
+//			}
+//		}
 		return invoice;
 	}
 }

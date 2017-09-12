@@ -10,7 +10,7 @@ package com.model.transaction;
 public class Item extends Transaction{
 
 	private String description;
-	
+		
 	/**
 	 * @return the description
 	 */

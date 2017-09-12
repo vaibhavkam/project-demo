@@ -33,6 +33,7 @@ import com.invoice.Boot;
 import com.invoice.repository.ItemRepository;
 import com.model.transaction.Invoice;
 import com.model.transaction.Item;
+import com.model.user.Customer;
 import com.model.util.Response;
 import com.model.util.ResponseCode;
 import com.model.util.ResponseType;
@@ -377,60 +378,60 @@ public class ItemServiceTest {
 	}
 
 	
-//	@Test @Transactional
-//	public void testReadItemsByInvoiceId() throws Exception{
-//		
-//		Date date = new Date();
-//		Customer customer = new Customer();
-//		customer.setName("Vaibhav");
-//		customer.setEmailId("test@test.com");
-//		customer.setCreatedDate(date);
-//		customer.setId(1);
-//		
-//		Item item1 = new Item();
-//		item1.setAmount(10);
-//		item1.setCreatedDate(date);
-//		item1.setDescription("Item1");
-//
-//		Item item2 = new Item();
-//		item2.setAmount(15);
-//		item2.setCreatedDate(date);
-//		item2.setDescription("Item2");
-//
-//		Invoice invoice = new Invoice();
-//		invoice.setAmount(0);
-//		invoice.setCustomer(customer);
-//		invoice.setCreatedDate(date);
-//		invoice.addItem(item1);
-//		invoice.addItem(item2);
-//		
-//		MvcResult result = mvc.perform(post("/invoice")
-//				.content(objectMapper.writeValueAsString(invoice))
-//				.accept(MediaType.APPLICATION_JSON)
-//				.contentType(MediaType.APPLICATION_JSON))
-//				.andExpect(status().isOk())
-//				.andReturn();
-//		
-//		Response response = objectMapper.readValue(result.getResponse().getContentAsString(), Response.class);
-//		Assert.isTrue(response.getResponseType()==ResponseType.INVOICE,"Not a invoice response");
-//		Invoice invoiceResult = objectMapper.convertValue(response.getObject(), Invoice.class);
-//		
-//		Assert.isTrue(invoiceResult.getId()>0, "Test failed while creating invoice");
-//		Assert.isTrue(invoiceResult.getAmount()==25, "Test failed while creating invoice");
-//		
-//		result = mvc.perform(MockMvcRequestBuilders.get("/item/invoice").param("id", invoiceResult.getId().toString())
-//				.accept(MediaType.APPLICATION_JSON)
-//				.contentType(MediaType.APPLICATION_JSON))
-//				.andExpect(status().isOk())
-//				.andReturn();
-//		
-//		response = objectMapper.readValue(result.getResponse().getContentAsString(), Response.class);
-//		Assert.isTrue(response.getResponseType()==ResponseType.ITEM,"Not a invoice response");
-//		List<Item> myObjects = objectMapper.convertValue(response.getObject(), new TypeReference<List<Item>>(){});
-//		Assert.isTrue(myObjects.size()==2, "Test failed while reading all items");
-//		Assert.isTrue(myObjects.get(0).getId()==invoiceResult.getItems().get(0).getId() || myObjects.get(0).getId()==invoiceResult.getItems().get(1).getId(), "Test failed due to item id mis-match");
-//		Assert.isTrue(myObjects.get(1).getId()==invoiceResult.getItems().get(0).getId() || myObjects.get(1).getId()==invoiceResult.getItems().get(1).getId(), "Test failed due to item id mis-match");
-//	}
+	@Test
+	public void testReadItemsByInvoiceId() throws Exception{
+		
+		Date date = new Date();
+		Customer customer = new Customer();
+		customer.setName("Vaibhav");
+		customer.setEmailId("test@test.com");
+		customer.setCreatedDate(date);
+		customer.setId(1);
+		
+		Item item1 = new Item();
+		item1.setAmount(10);
+		item1.setCreatedDate(date);
+		item1.setDescription("Item1");
+
+		Item item2 = new Item();
+		item2.setAmount(15);
+		item2.setCreatedDate(date);
+		item2.setDescription("Item2");
+
+		Invoice invoice = new Invoice();
+		invoice.setAmount(0);
+		invoice.setCustomer(customer);
+		invoice.setCreatedDate(date);
+		invoice.addItem(item1);
+		invoice.addItem(item2);
+		
+		MvcResult result = mvc.perform(post("/invoice")
+				.content(objectMapper.writeValueAsString(invoice))
+				.accept(MediaType.APPLICATION_JSON)
+				.contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk())
+				.andReturn();
+		
+		Response response = objectMapper.readValue(result.getResponse().getContentAsString(), Response.class);
+		Assert.isTrue(response.getResponseType()==ResponseType.INVOICE,"Not a invoice response");
+		Invoice invoiceResult = objectMapper.convertValue(response.getObject(), Invoice.class);
+		
+		Assert.isTrue(invoiceResult.getId()>0, "Test failed while creating invoice");
+		Assert.isTrue(invoiceResult.getAmount()==25, "Test failed while creating invoice");
+		
+		result = mvc.perform(MockMvcRequestBuilders.get("/item/invoice").param("id", invoiceResult.getId().toString())
+				.accept(MediaType.APPLICATION_JSON)
+				.contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk())
+				.andReturn();
+		
+		response = objectMapper.readValue(result.getResponse().getContentAsString(), Response.class);
+		Assert.isTrue(response.getResponseType()==ResponseType.ITEM,"Not a invoice response");
+		List<Item> myObjects = objectMapper.convertValue(response.getObject(), new TypeReference<List<Item>>(){});
+		Assert.isTrue(myObjects.size()==2, "Test failed while reading all items");
+		Assert.isTrue(myObjects.get(0).getId()==invoiceResult.getItems().get(0).getId() || myObjects.get(0).getId()==invoiceResult.getItems().get(1).getId(), "Test failed due to item id mis-match");
+		Assert.isTrue(myObjects.get(1).getId()==invoiceResult.getItems().get(0).getId() || myObjects.get(1).getId()==invoiceResult.getItems().get(1).getId(), "Test failed due to item id mis-match");
+	}
 
 
 }

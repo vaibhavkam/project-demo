@@ -29,7 +29,7 @@ public class InvoiceEntity {
 	@Column(nullable=false)
 	private long customerId;
 		
-	@OneToMany(mappedBy = "invoiceEntity", cascade = CascadeType.ALL)
+	@OneToMany(mappedBy = "invoiceEntity", cascade = CascadeType.ALL, orphanRemoval=true)
 	private Set<ItemEntity> itemEntities;
 	
 	@Column(nullable=false)
@@ -110,6 +110,7 @@ public class InvoiceEntity {
 		if(itemEntities==null)
 			itemEntities = new HashSet<ItemEntity>();
 		itemEntities.add(item);
+		item.setInvoiceEntity(this);
 	}
 
 	public boolean deleteItem(ItemEntity item) {

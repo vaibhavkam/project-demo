@@ -92,7 +92,7 @@ public class InvoiceController {
 			
 			if(invoiceService.isInvoiceExists(invoice.getId())){
 				
-		        return ResponseGenerator.createResponse(ResponseCode.UPDATE_SUCCESS, ResponseCode.UPDATE_SUCCESS.getMessage(), ResponseCode.UPDATE_SUCCESS.getMessage(), invoiceService.saveInvoice(invoice), ResponseType.INVOICE);
+		        return ResponseGenerator.createResponse(ResponseCode.UPDATE_SUCCESS, ResponseCode.UPDATE_SUCCESS.getMessage(), ResponseCode.UPDATE_SUCCESS.getMessage(), invoiceService.updateInvoice(invoice), ResponseType.INVOICE);
 			}
 			else{
 				logger.debug("Invoice data not found");

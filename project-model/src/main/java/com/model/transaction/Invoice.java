@@ -47,7 +47,7 @@ public class Invoice extends Transaction {
 	public void addItem(Item item) {
 		if(items==null)
 			items = new ArrayList<Item>();
-		items.add(item);	
+		items.add(item);
 	}
 	public boolean deleteItem(Item item) {
 		if(items==null || !items.contains(item))
