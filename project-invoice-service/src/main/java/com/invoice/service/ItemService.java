@@ -37,9 +37,9 @@ public interface ItemService {
 	/**
 	 * Method to delete item
 	 * @param id
-	 * @throws Exception 
+	 * @return 
 	 */
-	public void deleteItem(Long id) throws Exception;
+	public boolean deleteItem(Long id);
 	
 	/**
 	 * Method to get all items

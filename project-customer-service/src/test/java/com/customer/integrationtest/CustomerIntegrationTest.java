@@ -1,16 +1,17 @@
 /**
  * 
  */
-package com.customer.service;
+package com.customer.integrationtest;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
+import org.apache.commons.codec.binary.Base64;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +20,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
+import org.springframework.core.env.Environment;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -29,10 +31,11 @@ import org.springframework.util.Assert;
 
 import com.customer.Boot;
 import com.customer.repository.CustomerRepository;
+import com.customer.service.CustomerService;
+import com.customer.service.CustomerServiceImpl;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.model.transaction.Invoice;
 import com.model.user.Customer;
 import com.model.util.Response;
 import com.model.util.ResponseCode;
@@ -47,7 +50,7 @@ import com.model.util.ResponseType;
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT,classes = Boot.class)
 @AutoConfigureMockMvc
 @TestPropertySource(locations = "classpath:application-integrationtest.properties")
-public class CustomerServiceTest {
+public class CustomerIntegrationTest {
 	
     @TestConfiguration
     static class CustomerServiceImplTestContextConfiguration {
@@ -69,6 +72,17 @@ public class CustomerServiceTest {
 
     @Autowired
     ObjectMapper objectMapper;
+    
+    @Autowired
+    private Environment env;
+            
+    public static String authHeaderValue;
+
+    @Before
+    public void setUp(){
+    	
+    	authHeaderValue = "Basic " + new String(Base64.encodeBase64((env.getProperty("validConsumerUserName")+":"+env.getProperty("validConsumerPassword")).getBytes()));
+    }
 
 	@Test
 	public void testCreateCustomer() throws Exception{
@@ -79,6 +93,7 @@ public class CustomerServiceTest {
 		customer.setCreatedDate(new Date());;
 
 		MvcResult result = mvc.perform(post("/customer")
+				.header("Authorization", authHeaderValue)
 				.content(objectMapper.writeValueAsString(customer))
 				.accept(MediaType.APPLICATION_JSON)
 				.contentType(MediaType.APPLICATION_JSON))
@@ -99,6 +114,7 @@ public class CustomerServiceTest {
 		customer.setCreatedDate(new Date());;
 				
 		MvcResult result = mvc.perform(post("/customer")
+				.header("Authorization", authHeaderValue)
 				.content(objectMapper.writeValueAsString(customer))
 				.accept(MediaType.APPLICATION_JSON)
 				.contentType(MediaType.APPLICATION_JSON))
@@ -119,6 +135,7 @@ public class CustomerServiceTest {
 		customer.setEmailId("test@test.com");
 				
 		MvcResult result = mvc.perform(post("/customer")
+				.header("Authorization", authHeaderValue)
 				.content(objectMapper.writeValueAsString(customer))
 				.accept(MediaType.APPLICATION_JSON)
 				.contentType(MediaType.APPLICATION_JSON))
@@ -140,6 +157,7 @@ public class CustomerServiceTest {
 		customer.setCreatedDate(new Date());;
 
 		MvcResult result = mvc.perform(post("/customer")
+				.header("Authorization", authHeaderValue)
 				.content(objectMapper.writeValueAsString(customer))
 				.accept(MediaType.APPLICATION_JSON)
 				.contentType(MediaType.APPLICATION_JSON))
@@ -152,6 +170,7 @@ public class CustomerServiceTest {
 		Assert.isTrue(customerCreateResult.getId()>0, "Test failed while creating customer");
 		
 		result = mvc.perform(MockMvcRequestBuilders.get("/customer/{id}", customerCreateResult.getId())
+				.header("Authorization", authHeaderValue)
 				.accept(MediaType.APPLICATION_JSON)
 				.contentType(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk())
@@ -173,6 +192,7 @@ public class CustomerServiceTest {
 		customer.setCreatedDate(new Date());;
 		
 		MvcResult result = mvc.perform(MockMvcRequestBuilders.get("/customer/{id}", new Long(1000))
+				.header("Authorization", authHeaderValue)
 				.accept(MediaType.APPLICATION_JSON)
 				.contentType(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk())
@@ -192,6 +212,7 @@ public class CustomerServiceTest {
 		customer.setCreatedDate(new Date());;
 
 		MvcResult result = mvc.perform(post("/customer")
+				.header("Authorization", authHeaderValue)
 				.content(objectMapper.writeValueAsString(customer))
 				.accept(MediaType.APPLICATION_JSON)
 				.contentType(MediaType.APPLICATION_JSON))
@@ -207,6 +228,7 @@ public class CustomerServiceTest {
 		customerCreateResult.setEmailId("updateEmailId@test.com");
 		
 		result = mvc.perform(put("/customer")
+				.header("Authorization", authHeaderValue)
 				.content(objectMapper.writeValueAsString(customerCreateResult))
 				.accept(MediaType.APPLICATION_JSON)
 				.contentType(MediaType.APPLICATION_JSON))
@@ -221,6 +243,7 @@ public class CustomerServiceTest {
 		Assert.isTrue(customerCreateResult.getEmailId().equalsIgnoreCase("updateEmailId@test.com"), "Test failed due to expcetd and actual id mis-match");
 		
 		result = mvc.perform(MockMvcRequestBuilders.get("/customer/{id}", customerUpdateResult.getId())
+				.header("Authorization", authHeaderValue)
 				.accept(MediaType.APPLICATION_JSON)
 				.contentType(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk())
@@ -243,6 +266,7 @@ public class CustomerServiceTest {
 		customer.setCreatedDate(new Date());;
 
 		MvcResult result = mvc.perform(post("/customer")
+				.header("Authorization", authHeaderValue)
 				.content(objectMapper.writeValueAsString(customer))
 				.accept(MediaType.APPLICATION_JSON)
 				.contentType(MediaType.APPLICATION_JSON))
@@ -258,6 +282,7 @@ public class CustomerServiceTest {
 		customerCreateResult.setName(null);
 		
 		result = mvc.perform(put("/customer")
+				.header("Authorization", authHeaderValue)
 				.content(objectMapper.writeValueAsString(customerCreateResult))
 				.accept(MediaType.APPLICATION_JSON)
 				.contentType(MediaType.APPLICATION_JSON))
@@ -269,6 +294,7 @@ public class CustomerServiceTest {
 		Assert.isTrue(response.getResponseCode().equals(ResponseCode.VALIDATION_ERROR),"Validation failed while creating customer with null name");
 		
 		result = mvc.perform(MockMvcRequestBuilders.get("/customer/{id}", customerCreateResult.getId())
+				.header("Authorization", authHeaderValue)
 				.accept(MediaType.APPLICATION_JSON)
 				.contentType(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk())
@@ -291,6 +317,7 @@ public class CustomerServiceTest {
 		customer.setCreatedDate(new Date());
 
 		MvcResult result = mvc.perform(post("/customer")
+				.header("Authorization", authHeaderValue)
 				.content(objectMapper.writeValueAsString(customer))
 				.accept(MediaType.APPLICATION_JSON)
 				.contentType(MediaType.APPLICATION_JSON))
@@ -306,6 +333,7 @@ public class CustomerServiceTest {
 		customerCreateResult.setCreatedDate(null);
 		
 		result = mvc.perform(put("/customer")
+				.header("Authorization", authHeaderValue)
 				.content(objectMapper.writeValueAsString(customerCreateResult))
 				.accept(MediaType.APPLICATION_JSON)
 				.contentType(MediaType.APPLICATION_JSON))
@@ -317,6 +345,7 @@ public class CustomerServiceTest {
 		Assert.isTrue(response.getResponseCode().equals(ResponseCode.VALIDATION_ERROR),"Validation failed while creating customer with null name");
 		
 		result = mvc.perform(MockMvcRequestBuilders.get("/customer/{id}", customerCreateResult.getId())
+				.header("Authorization", authHeaderValue)
 				.accept(MediaType.APPLICATION_JSON)
 				.contentType(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk())
@@ -339,6 +368,7 @@ public class CustomerServiceTest {
 		customer.setCreatedDate(new Date());;
 
 		MvcResult result = mvc.perform(post("/customer")
+				.header("Authorization", authHeaderValue)
 				.content(objectMapper.writeValueAsString(customer))
 				.accept(MediaType.APPLICATION_JSON)
 				.contentType(MediaType.APPLICATION_JSON))
@@ -354,6 +384,7 @@ public class CustomerServiceTest {
 		customerCreateResult.setEmailId("updateEmailId@test.com");
 		
 		result = mvc.perform(MockMvcRequestBuilders.delete("/customer/{id}", customerCreateResult.getId())
+				.header("Authorization", authHeaderValue)
 				.accept(MediaType.APPLICATION_JSON)
 				.contentType(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk())
@@ -364,6 +395,7 @@ public class CustomerServiceTest {
 		Assert.isTrue(response.getResponseCode().equals(ResponseCode.DELETE_SUCCESS),"Validation failed while deleteing customer");
 		
 		result = mvc.perform(MockMvcRequestBuilders.get("/customer/{id}", customerCreateResult.getId())
+				.header("Authorization", authHeaderValue)
 				.accept(MediaType.APPLICATION_JSON)
 				.contentType(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk())
@@ -378,6 +410,7 @@ public class CustomerServiceTest {
 	public void testDeleteCustomerForNonExistingId() throws Exception{
 		
 		MvcResult result = mvc.perform(MockMvcRequestBuilders.delete("/customer/{id}", new Long(1000))
+				.header("Authorization", authHeaderValue)
 				.accept(MediaType.APPLICATION_JSON)
 				.contentType(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk())
@@ -398,6 +431,7 @@ public class CustomerServiceTest {
 		customer1.setCreatedDate(new Date());
 
 		MvcResult result = mvc.perform(post("/customer")
+				.header("Authorization", authHeaderValue)
 				.content(objectMapper.writeValueAsString(customer1))
 				.accept(MediaType.APPLICATION_JSON)
 				.contentType(MediaType.APPLICATION_JSON))
@@ -415,6 +449,7 @@ public class CustomerServiceTest {
 		customer2.setCreatedDate(new Date());
 
 		result = mvc.perform(post("/customer")
+				.header("Authorization", authHeaderValue)
 				.content(objectMapper.writeValueAsString(customer1))
 				.accept(MediaType.APPLICATION_JSON)
 				.contentType(MediaType.APPLICATION_JSON))
@@ -427,6 +462,7 @@ public class CustomerServiceTest {
 		Assert.isTrue(customerCreateResult2.getId()>0, "Test failed while creating customer");
 
 		result = mvc.perform(MockMvcRequestBuilders.get("/customer")
+				.header("Authorization", authHeaderValue)
 				.accept(MediaType.APPLICATION_JSON)
 				.contentType(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk())

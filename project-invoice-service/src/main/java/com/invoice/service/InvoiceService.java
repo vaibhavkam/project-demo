@@ -47,8 +47,9 @@ public interface InvoiceService {
 	/**
 	 * Method to delete invoice
 	 * @param id
+	 * @return 
 	 */
-	public void deleteInvoice(Long id);
+	public boolean deleteInvoice(Long id);
 	
 	/**
 	 * Method to get all invoices

@@ -20,11 +20,15 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.invoice.service.InvoiceService;
 import com.model.transaction.Invoice;
+import com.model.user.Customer;
+import com.model.util.Response;
 import com.model.util.ResponseCode;
 import com.model.util.ResponseType;
 import com.util.service.ResponseGenerator;
+import com.util.service.RestClient;
 
 /**
  * @author vkamble
@@ -39,6 +43,9 @@ public class InvoiceController {
 	@Autowired
 	InvoiceService invoiceService;
 	
+    @Autowired
+    ObjectMapper objectMapper;
+
 	/**
 	 * Request end point to save invoice
 	 * @param invoice
@@ -60,8 +67,18 @@ public class InvoiceController {
 		        return ResponseGenerator.createResponse(ResponseCode.VALIDATION_ERROR, ResponseCode.VALIDATION_ERROR.getMessage(), causes, null, ResponseType.ERROR);
 			}
 			
-	        return ResponseGenerator.createResponse(ResponseCode.CREATE_SUCCESS, ResponseCode.CREATE_SUCCESS.getMessage(), ResponseCode.CREATE_SUCCESS.getMessage(), invoiceService.saveInvoice(invoice), ResponseType.INVOICE);
-			
+			Response response = RestClient.getResourceById(invoice.getCustomer().getId(), ResponseType.CUSTOMER);
+			if(response.getResponseType()==ResponseType.CUSTOMER){
+				Customer customer = objectMapper.convertValue(response.getObject(), Customer.class);
+				if(customer.getId()==invoice.getCustomer().getId()){
+					invoice = invoiceService.saveInvoice(invoice);
+					setInvoiceWithCustomerDetails(invoice);
+					return ResponseGenerator.createResponse(ResponseCode.CREATE_SUCCESS, ResponseCode.CREATE_SUCCESS.getMessage(), ResponseCode.CREATE_SUCCESS.getMessage(), invoice, ResponseType.INVOICE);
+				}else
+	        		return ResponseGenerator.createResponse(ResponseCode.CREATE_ERROR, ResponseCode.CREATE_ERROR.getMessage(), "Invalid customer attached to invoice", null, ResponseType.ERROR);
+			}else
+	        	return ResponseGenerator.createResponse(ResponseCode.CREATE_ERROR, ResponseCode.CREATE_ERROR.getMessage(), "Invalid response from customer service", null, ResponseType.ERROR);
+
 		}catch(Exception e){
 			logger.debug("Error occurred while saving invoice");
 	        return ResponseGenerator.createResponse(ResponseCode.CREATE_ERROR, ResponseCode.CREATE_ERROR.getMessage(), e.getMessage(), null, ResponseType.ERROR);
@@ -92,7 +109,17 @@ public class InvoiceController {
 			
 			if(invoiceService.isInvoiceExists(invoice.getId())){
 				
-		        return ResponseGenerator.createResponse(ResponseCode.UPDATE_SUCCESS, ResponseCode.UPDATE_SUCCESS.getMessage(), ResponseCode.UPDATE_SUCCESS.getMessage(), invoiceService.updateInvoice(invoice), ResponseType.INVOICE);
+				Response response = RestClient.getResourceById(invoice.getCustomer().getId(), ResponseType.CUSTOMER);
+				if(response.getResponseType()==ResponseType.CUSTOMER){
+					Customer customer = objectMapper.convertValue(response.getObject(), Customer.class);
+					if(customer.getId()==invoice.getCustomer().getId()){
+						invoice = invoiceService.saveInvoice(invoice);
+						setInvoiceWithCustomerDetails(invoice);
+						return ResponseGenerator.createResponse(ResponseCode.UPDATE_SUCCESS, ResponseCode.UPDATE_SUCCESS.getMessage(), ResponseCode.UPDATE_SUCCESS.getMessage(), invoice, ResponseType.INVOICE);
+					}else
+		        		return ResponseGenerator.createResponse(ResponseCode.UPDATE_ERROR, ResponseCode.UPDATE_ERROR.getMessage(), "Invalid customer attached to invoice", null, ResponseType.ERROR);
+				}else
+		        	return ResponseGenerator.createResponse(ResponseCode.UPDATE_ERROR, ResponseCode.UPDATE_ERROR.getMessage(), "Invalid response from customer service", null, ResponseType.ERROR);
 			}
 			else{
 				logger.debug("Invoice data not found");
@@ -141,9 +168,11 @@ public class InvoiceController {
 		
 		try{
 			
-			if(invoiceService.isInvoiceExists(id))
-		        return ResponseGenerator.createResponse(ResponseCode.READ_SUCCESS, ResponseCode.READ_SUCCESS.getMessage(), ResponseCode.READ_SUCCESS.getMessage(), invoiceService.getInvoice(id), ResponseType.INVOICE);
-			else{
+			if(invoiceService.isInvoiceExists(id)){
+				Invoice invoice = invoiceService.getInvoice(id);
+				setInvoiceWithCustomerDetails(invoice);
+		        return ResponseGenerator.createResponse(ResponseCode.READ_SUCCESS, ResponseCode.READ_SUCCESS.getMessage(), ResponseCode.READ_SUCCESS.getMessage(), invoice, ResponseType.INVOICE);
+			}else{
 				logger.debug("Invoice data not found");
 		        return ResponseGenerator.createResponse(ResponseCode.DATA_NOT_FOUND_ERROR, ResponseCode.DATA_NOT_FOUND_ERROR.getMessage(), "Invoice with id="+id+" not found", null, ResponseType.ERROR);
 			}			
@@ -162,7 +191,10 @@ public class InvoiceController {
 	public Object getAllInvoice(){
 		
 		try{
-	        return ResponseGenerator.createResponse(ResponseCode.READ_SUCCESS, ResponseCode.READ_SUCCESS.getMessage(), ResponseCode.READ_SUCCESS.getMessage(), invoiceService.getAllInvoices(), ResponseType.INVOICE);
+			
+			List<Invoice> invoices = invoiceService.getAllInvoices();
+			setInvoicesWithCustomerDetails(invoices);
+	        return ResponseGenerator.createResponse(ResponseCode.READ_SUCCESS, ResponseCode.READ_SUCCESS.getMessage(), ResponseCode.READ_SUCCESS.getMessage(), invoices, ResponseType.INVOICE);
 		}
 		catch(Exception e){
 			logger.debug("Error occurred while fetching invoices");
@@ -178,12 +210,39 @@ public class InvoiceController {
 	public Object getAllInvoiceForCustomerId(@RequestParam("id") Long id){
 		
 		try{
-			
-	        return ResponseGenerator.createResponse(ResponseCode.READ_SUCCESS, ResponseCode.READ_SUCCESS.getMessage(), ResponseCode.READ_SUCCESS.getMessage(), invoiceService.getAllInvoicesForCustomerId(id), ResponseType.INVOICE);
+			List<Invoice> invoices = invoiceService.getAllInvoicesForCustomerId(id);
+			setInvoicesWithCustomerDetails(invoices);
+	        return ResponseGenerator.createResponse(ResponseCode.READ_SUCCESS, ResponseCode.READ_SUCCESS.getMessage(), ResponseCode.READ_SUCCESS.getMessage(), invoices, ResponseType.INVOICE);
 		}
 		catch(Exception e){
 			logger.debug("Error occurred while fetching invoices");
 	        return ResponseGenerator.createResponse(ResponseCode.READ_ERROR, ResponseCode.READ_ERROR.getMessage(), e.getMessage(), null, ResponseType.ERROR);
 		}
+	}
+	
+	public void setInvoiceWithCustomerDetails(Invoice invoice){
+		
+		Response response = RestClient.getResourceById(invoice.getCustomer().getId(), ResponseType.CUSTOMER);
+		if(response.getResponseType()==ResponseType.CUSTOMER){
+			Customer customerResult = objectMapper.convertValue(response.getObject(), Customer.class);
+			if(customerResult.getId()==invoice.getCustomer().getId()){
+				invoice.setCustomer(customerResult);
+			}
+		}
+
+	}
+	
+	public void setInvoicesWithCustomerDetails(List<Invoice> invoices){
+		
+		for(Invoice invoice: invoices){
+			Response response = RestClient.getResourceById(invoice.getCustomer().getId(), ResponseType.CUSTOMER);
+			if(response.getResponseType()==ResponseType.CUSTOMER){
+				Customer customerResult = objectMapper.convertValue(response.getObject(), Customer.class);
+				if(customerResult.getId()==invoice.getCustomer().getId()){
+					invoice.setCustomer(customerResult);
+				}
+			}
+		}
+
 	}
 }

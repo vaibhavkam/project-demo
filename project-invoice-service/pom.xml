@@ -9,6 +9,8 @@
     <java.version>1.8</java.version>
   	<project-model-version>0.0.1-SNAPSHOT</project-model-version>
   	<project-util-service-version>0.0.1-SNAPSHOT</project-util-service-version>
+  	<h2database-version>1.4.194</h2database-version>
+  	<jacoco-version>0.7.9</jacoco-version>  	
   </properties>
   
   <parent>
@@ -32,6 +34,10 @@
     	<artifactId>spring-boot-starter-test</artifactId>
     	<scope>test</scope>
     </dependency>
+	<dependency>
+	    <groupId>org.springframework.boot</groupId>
+	    <artifactId>spring-boot-starter-security</artifactId>
+	</dependency>    
   	<dependency>
     	<groupId>com.fasterxml.jackson.core</groupId>
     	<artifactId>jackson-core</artifactId>
@@ -58,17 +64,17 @@
 	    <groupId>com.h2database</groupId>
 	    <artifactId>h2</artifactId>
 	    <scope>test</scope>
-	    <version>1.4.194</version>
+	    <version>${h2database-version}</version>
 	</dependency>	
 	<dependency>
 	    <groupId>org.jacoco</groupId>
 	    <artifactId>jacoco-maven-plugin</artifactId>
-	    <version>0.7.9</version>
+	    <version>${jacoco-version}</version>
 	</dependency>	
   </dependencies>
   
   <build>
-    <finalName>invoiceDemo</finalName>
+  <finalName>invoiceDemo</finalName>
   	<plugins>
   		<plugin>
   			<groupId>org.springframework.boot</groupId>
@@ -77,23 +83,103 @@
         <plugin>
             <groupId>org.jacoco</groupId>
             <artifactId>jacoco-maven-plugin</artifactId>
-            <version>0.7.9</version>
+	    	<version>${jacoco-version}</version>
+            <configuration>            
+            </configuration>
             <executions>
-                <execution>
-                    <id>default-prepare-agent</id>
-                    <goals>
-                        <goal>prepare-agent</goal>
-                    </goals>
-                </execution>
-                <execution>
-                    <id>default-report</id>
-                    <phase>prepare-package</phase>
-                    <goals>
-                        <goal>report</goal>
-                    </goals>
-                </execution>
+				<execution>
+		            <id>pre-unit-test</id>
+		            <goals>
+		                <goal>prepare-agent</goal>
+		            </goals>
+		            <configuration>
+		                <destFile>${project.build.directory}/coverage-reports/jacoco-ut.exec</destFile>
+		                <propertyName>surefireArgLine</propertyName>
+		                		                
+		            </configuration>
+		        </execution>
+		        <execution>
+		            <id>post-unit-test</id>
+		            <phase>test</phase>
+		            <goals>
+		                <goal>report</goal>
+		            </goals>
+		            <configuration>
+		                <dataFile>${project.build.directory}/coverage-reports/jacoco-ut.exec</dataFile>
+		                <outputDirectory>${project.reporting.outputDirectory}/jacoco-ut</outputDirectory>
+		                
+				        <includes>
+				       		<include>**/com/invoice/service/*</include>
+				        </includes>
+		                
+		            </configuration>
+		        </execution>
+		        
+		       	<execution>
+		            <id>pre-integration-test</id>
+		            <phase>pre-integration-test</phase>
+		            <goals>
+		                <goal>prepare-agent</goal>
+		            </goals>
+		            <configuration>
+		                <destFile>${project.build.directory}/coverage-reports/jacoco-it.exec</destFile>
+		                <propertyName>failsafeArgLine</propertyName>
+		            </configuration>
+		        </execution>
+		        <execution>
+		            <id>post-integration-test</id>
+		            <phase>post-integration-test</phase>
+		            <goals>
+		                <goal>report</goal>
+		            </goals>
+		            <configuration>
+		                <dataFile>${project.build.directory}/coverage-reports/jacoco-it.exec</dataFile>
+		                <outputDirectory>${project.reporting.outputDirectory}/jacoco-it</outputDirectory>
+		                
+		                <includes>
+							<include>**/com/invoice/controller/*</include>
+							<include>**/com/invoice/repository/*</include>
+							<include>**/com/invoice/service/*</include>
+							<include>**/com/invoice/security/*</include>
+						</includes>
+		                
+		            </configuration>
+		        </execution>
             </executions>
-        </plugin>  		
+        </plugin>  
+        
+        <plugin>
+		    <groupId>org.apache.maven.plugins</groupId>
+		    <artifactId>maven-surefire-plugin</artifactId>
+		    <configuration>
+		        <argLine>${surefireArgLine}</argLine>
+		        <skipTests>false</skipTests>
+		        <excludes>
+		        	<exclude>**/com/invoice/integrationtest/*</exclude>
+		        </excludes>
+		    </configuration>
+		</plugin>
+		
+		<plugin>
+		    <groupId>org.apache.maven.plugins</groupId>
+		    <artifactId>maven-failsafe-plugin</artifactId>
+		    <executions>
+		        <execution>
+		            <id>integration-tests</id>
+		            <goals>
+		                <goal>integration-test</goal>
+		                <goal>verify</goal>
+		            </goals>
+		            <configuration>
+		                <argLine>${failsafeArgLine}</argLine>
+		                <skipTests>false</skipTests>
+		                <includes>
+		        			<include>**/com/invoice/integrationtest/*</include>
+		        		</includes>
+		            </configuration>
+		        </execution>
+		    </executions>
+		</plugin>
   	</plugins>
   </build>
   

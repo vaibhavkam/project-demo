@@ -38,8 +38,9 @@ public interface CustomerService {
 	/**
 	 * Method to delete customer
 	 * @param id
+	 * @return 
 	 */
-	public void deleteCustomer(Long id);
+	public boolean deleteCustomer(Long id);
 	
 	/**
 	 * Method to get all customers

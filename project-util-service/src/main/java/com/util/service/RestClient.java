@@ -6,6 +6,7 @@ package com.util.service;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.springframework.http.client.support.BasicAuthorizationInterceptor;
 import org.springframework.web.client.RestTemplate;
 
 import com.model.util.Response;
@@ -21,18 +22,29 @@ public class RestClient {
 	{
 		
 	    String uri = "http://localhost:8080";
-	    
-	    if(responseType==ResponseType.CUSTOMER)
+	    String userName=null;
+	    String password=null;
+
+	    if(responseType==ResponseType.CUSTOMER){
 	    	uri+="/customerDemo/customer/{id}";
-	    else if(responseType==ResponseType.INVOICE)
+	    	userName="customerServiceUser";
+	    	password="password";
+	    }
+	    else if(responseType==ResponseType.INVOICE){
 	    	uri+="/invoiceDemo/invoice/{id}";
-	    else
+	    	userName="invoiceServiceUser";
+	    	password="password";
+	    }
+	    else{
 	    	uri+="/invoiceDemo/item/{id}";
+	    	userName="invoiceServiceUser";
+	    	password="password";
+	    }
 	   
 	    Map<String, String> params = new HashMap<String, String>();
 	    params.put("id", id.toString());
-	     
 	    RestTemplate restTemplate = new RestTemplate();
+	    restTemplate.getInterceptors().add(new BasicAuthorizationInterceptor(userName, password));	    
 	    Response response = restTemplate.getForObject(uri, Response.class, params);
 	     
 	    return response;

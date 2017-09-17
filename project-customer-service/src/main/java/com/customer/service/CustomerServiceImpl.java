@@ -65,8 +65,9 @@ public class CustomerServiceImpl implements CustomerService{
 	 * @param id
 	 */
 	@Override
-	public void deleteCustomer(Long id) {
+	public boolean deleteCustomer(Long id) {
 		customerRepository.delete(id);
+		return true;
 	}
 
 	/**

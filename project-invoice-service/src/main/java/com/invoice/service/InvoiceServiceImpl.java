@@ -9,16 +9,12 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.invoice.entity.InvoiceEntity;
 import com.invoice.entity.ItemEntity;
 import com.invoice.repository.InvoiceRepository;
 import com.model.transaction.Invoice;
 import com.model.transaction.Item;
 import com.model.user.Customer;
-import com.model.util.Response;
-import com.model.util.ResponseType;
-import com.util.service.RestClient;
 
 /**
  * @author vkamble
@@ -33,9 +29,6 @@ public class InvoiceServiceImpl implements InvoiceService{
 	@Autowired
 	ItemService itemService;
 	
-    @Autowired
-    ObjectMapper objectMapper;
-
 	/**
 	 * Method to save invoice
 	 * @param invoice
@@ -47,19 +40,11 @@ public class InvoiceServiceImpl implements InvoiceService{
 		
 		if(invoice.getItems()==null || invoice.getItems().size()==0)
 			throw new Exception("Invoice should contains atleast one item");
-		
-//		Response response = RestClient.getResourceById(invoice.getCustomer().getId(), ResponseType.CUSTOMER);
-//		if(response.getResponseType()==ResponseType.CUSTOMER){
-//			Customer customer = objectMapper.convertValue(response.getObject(), Customer.class);
-//			if(customer.getId()==invoice.getCustomer().getId()){
-				InvoiceEntity invoiceEntity = getInvoiceEntityFromInvoiceModel(invoice);
-				invoiceRepository.save(invoiceEntity);
-				invoice=getInvoice(invoiceEntity.getId());
-				return invoice;
-//			}else
-//				throw new Exception("Invalid customer attached to invoice");
-//		}else
-//			throw new Exception("Invalid response from customer service");
+						
+		InvoiceEntity invoiceEntity = getInvoiceEntityFromInvoiceModel(invoice);
+		invoiceRepository.save(invoiceEntity);
+		invoice=getInvoice(invoiceEntity.getId());
+		return invoice;
 	}
 	
 	/**
@@ -107,8 +92,9 @@ public class InvoiceServiceImpl implements InvoiceService{
 	 * @param id
 	 */
 	@Override
-	public void deleteInvoice(Long id) {
+	public boolean deleteInvoice(Long id) {
 		invoiceRepository.delete(id);
+		return true;
 	}
 
 
@@ -189,13 +175,6 @@ public class InvoiceServiceImpl implements InvoiceService{
 		}
 		invoice.setAmount(invoiceAmount);
 		
-//		Response response = RestClient.getResourceById(invoice.getCustomer().getId(), ResponseType.CUSTOMER);
-//		if(response.getResponseType()==ResponseType.CUSTOMER){
-//			Customer customerResult = objectMapper.convertValue(response.getObject(), Customer.class);
-//			if(customerResult.getId()==invoice.getCustomer().getId()){
-//				invoice.setCustomer(customerResult);
-//			}
-//		}
 		return invoice;
 	}
 }

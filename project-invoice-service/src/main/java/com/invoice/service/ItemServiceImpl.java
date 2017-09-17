@@ -13,7 +13,6 @@ import com.invoice.entity.InvoiceEntity;
 import com.invoice.entity.ItemEntity;
 import com.invoice.repository.InvoiceRepository;
 import com.invoice.repository.ItemRepository;
-import com.model.transaction.Invoice;
 import com.model.transaction.Item;
 
 /**
@@ -75,9 +74,10 @@ public class ItemServiceImpl implements ItemService{
 	 * @throws Exception 
 	 */
 	@Override
-	public void deleteItem(Long id) throws Exception {
+	public boolean deleteItem(Long id) {
 		
 			itemRepository.delete(id);
+			return true;
 	}
 	
 	/**

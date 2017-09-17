@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.invoice.service;
+package com.invoice.integrationtest;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -10,6 +10,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.util.Date;
 import java.util.List;
 
+import org.apache.commons.codec.binary.Base64;
+import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,19 +21,21 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
+import org.springframework.core.env.Environment;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.invoice.Boot;
 import com.invoice.repository.InvoiceRepository;
+import com.invoice.service.InvoiceService;
+import com.invoice.service.InvoiceServiceImpl;
 import com.model.transaction.Invoice;
 import com.model.transaction.Item;
 import com.model.user.Customer;
@@ -46,7 +51,7 @@ import com.model.util.ResponseType;
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT,classes = Boot.class)
 @AutoConfigureMockMvc
 @TestPropertySource(locations = "classpath:application-integrationtest.properties")
-public class InvoiceServiceTest {
+public class InvoiceIntegrationTest {
 
     @TestConfiguration
     static class InvoiceServiceImplTestContextConfiguration {
@@ -60,15 +65,23 @@ public class InvoiceServiceTest {
     
 	@Autowired
 	private MockMvc mvc;
-	
-	@Autowired
-	private InvoiceService invoiceService;
-	
+		
 	@Autowired
 	InvoiceRepository invoiceRepository;
 
     @Autowired
     ObjectMapper objectMapper;
+    
+    @Autowired
+    private Environment env;
+            
+    public static String authHeaderValue;
+
+    @Before
+    public void setUp(){
+    	
+    	authHeaderValue = "Basic " + new String(Base64.encodeBase64((env.getProperty("validConsumerUserName")+":"+env.getProperty("validConsumerPassword")).getBytes()));
+    }
     
 	@Test
 	public void testCreateInvoice() throws Exception{
@@ -98,13 +111,13 @@ public class InvoiceServiceTest {
 		invoice.addItem(item2);
 
 		MvcResult result = mvc.perform(post("/invoice")
+				.header("Authorization", authHeaderValue)
 				.content(objectMapper.writeValueAsString(invoice))
 				.accept(MediaType.APPLICATION_JSON)
 				.contentType(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk())
 				.andReturn();
 		
-		System.out.println("esult.getResponse().getContentAsString():"+result.getResponse().getContentAsString());
 		Response response = objectMapper.readValue(result.getResponse().getContentAsString(), Response.class);
 		Assert.isTrue(response.getResponseType()==ResponseType.INVOICE,"Not a invoice response");
 		Invoice invoiceResult = objectMapper.convertValue(response.getObject(), Invoice.class);
@@ -140,6 +153,7 @@ public class InvoiceServiceTest {
 		invoice.addItem(item2);
 
 		MvcResult result = mvc.perform(post("/invoice")
+				.header("Authorization", authHeaderValue)
 				.content(objectMapper.writeValueAsString(invoice))
 				.accept(MediaType.APPLICATION_JSON)
 				.contentType(MediaType.APPLICATION_JSON))
@@ -173,6 +187,7 @@ public class InvoiceServiceTest {
 		invoice.setCreatedDate(date);
 
 		MvcResult result = mvc.perform(post("/invoice")
+				.header("Authorization", authHeaderValue)
 				.content(objectMapper.writeValueAsString(invoice))
 				.accept(MediaType.APPLICATION_JSON)
 				.contentType(MediaType.APPLICATION_JSON))
@@ -212,6 +227,7 @@ public class InvoiceServiceTest {
 		invoice.setCustomer(customer);
 
 		MvcResult result = mvc.perform(post("/invoice")
+				.header("Authorization", authHeaderValue)
 				.content(objectMapper.writeValueAsString(invoice))
 				.accept(MediaType.APPLICATION_JSON)
 				.contentType(MediaType.APPLICATION_JSON))
@@ -239,6 +255,7 @@ public class InvoiceServiceTest {
 		invoice.setCreatedDate(date);
 
 		MvcResult result = mvc.perform(post("/invoice")
+				.header("Authorization", authHeaderValue)
 				.content(objectMapper.writeValueAsString(invoice))
 				.accept(MediaType.APPLICATION_JSON)
 				.contentType(MediaType.APPLICATION_JSON))
@@ -278,6 +295,7 @@ public class InvoiceServiceTest {
 		invoice.addItem(item2);
 
 		MvcResult result = mvc.perform(post("/invoice")
+				.header("Authorization", authHeaderValue)
 				.content(objectMapper.writeValueAsString(invoice))
 				.accept(MediaType.APPLICATION_JSON)
 				.contentType(MediaType.APPLICATION_JSON))
@@ -293,6 +311,7 @@ public class InvoiceServiceTest {
 		Assert.isTrue(invoiceCreateResult.getAmount()==25, "Test failed while creating invoice");
 		
 		result = mvc.perform(MockMvcRequestBuilders.get("/invoice/{id}", invoiceCreateResult.getId())
+				.header("Authorization", authHeaderValue)
 				.accept(MediaType.APPLICATION_JSON)
 				.contentType(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk())
@@ -311,6 +330,7 @@ public class InvoiceServiceTest {
 	public void testReadInvoiceForNonExistingId() throws Exception{
 		
 		MvcResult result = mvc.perform(MockMvcRequestBuilders.get("/invoice/{id}", new Long(1000))
+				.header("Authorization", authHeaderValue)
 				.accept(MediaType.APPLICATION_JSON)
 				.contentType(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk())
@@ -350,6 +370,7 @@ public class InvoiceServiceTest {
 		invoice.addItem(item2);
 
 		MvcResult result = mvc.perform(post("/invoice")
+				.header("Authorization", authHeaderValue)
 				.content(objectMapper.writeValueAsString(invoice))
 				.accept(MediaType.APPLICATION_JSON)
 				.contentType(MediaType.APPLICATION_JSON))
@@ -372,6 +393,7 @@ public class InvoiceServiceTest {
 		invoiceCreateResult.setCustomer(customer1);
 		
 		result = mvc.perform(put("/invoice")
+				.header("Authorization", authHeaderValue)
 				.content(objectMapper.writeValueAsString(invoiceCreateResult))
 				.accept(MediaType.APPLICATION_JSON)
 				.contentType(MediaType.APPLICATION_JSON))
@@ -387,6 +409,7 @@ public class InvoiceServiceTest {
 		Assert.isTrue(invoiceUpdateResult.getCustomer().getId()==customer1.getId(), "Test failed due to expcetd and actual customer id mis-match");
 		
 		result = mvc.perform(MockMvcRequestBuilders.get("/invoice/{id}", invoiceUpdateResult.getId())
+				.header("Authorization", authHeaderValue)
 				.accept(MediaType.APPLICATION_JSON)
 				.contentType(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk())
@@ -428,6 +451,7 @@ public class InvoiceServiceTest {
 		invoice.addItem(item1);
 
 		MvcResult result = mvc.perform(post("/invoice")
+				.header("Authorization", authHeaderValue)
 				.content(objectMapper.writeValueAsString(invoice))
 				.accept(MediaType.APPLICATION_JSON)
 				.contentType(MediaType.APPLICATION_JSON))
@@ -444,6 +468,7 @@ public class InvoiceServiceTest {
 		invoiceCreateResult.addItem(item2);
 		
 		result = mvc.perform(put("/invoice")
+				.header("Authorization", authHeaderValue)
 				.content(objectMapper.writeValueAsString(invoiceCreateResult))
 				.accept(MediaType.APPLICATION_JSON)
 				.contentType(MediaType.APPLICATION_JSON))
@@ -461,6 +486,7 @@ public class InvoiceServiceTest {
 
 		
 		result = mvc.perform(MockMvcRequestBuilders.get("/invoice/{id}", invoiceUpdateResult.getId())
+				.header("Authorization", authHeaderValue)
 				.accept(MediaType.APPLICATION_JSON)
 				.contentType(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk())
@@ -504,6 +530,7 @@ public class InvoiceServiceTest {
 		invoice.addItem(item2);
 
 		MvcResult result = mvc.perform(post("/invoice")
+				.header("Authorization", authHeaderValue)
 				.content(objectMapper.writeValueAsString(invoice))
 				.accept(MediaType.APPLICATION_JSON)
 				.contentType(MediaType.APPLICATION_JSON))
@@ -519,6 +546,7 @@ public class InvoiceServiceTest {
 
 		
 		result = mvc.perform(MockMvcRequestBuilders.delete("/invoice/{id}", invoiceCreateResult.getId())
+				.header("Authorization", authHeaderValue)
 				.accept(MediaType.APPLICATION_JSON)
 				.contentType(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk())
@@ -529,6 +557,7 @@ public class InvoiceServiceTest {
 		Assert.isTrue(response.getResponseCode().equals(ResponseCode.DELETE_SUCCESS),"Validation failed while invoice customer");
 		
 		result = mvc.perform(MockMvcRequestBuilders.get("/invoice/{id}", invoiceCreateResult.getId())
+				.header("Authorization", authHeaderValue)
 				.accept(MediaType.APPLICATION_JSON)
 				.contentType(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk())
@@ -544,6 +573,7 @@ public class InvoiceServiceTest {
 		
 		
 		MvcResult result = mvc.perform(MockMvcRequestBuilders.delete("/invoice/{id}", new Long(1000))
+				.header("Authorization", authHeaderValue)
 				.accept(MediaType.APPLICATION_JSON)
 				.contentType(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk())
@@ -582,6 +612,7 @@ public class InvoiceServiceTest {
 		invoice.addItem(item2);
 
 		MvcResult result = mvc.perform(post("/invoice")
+				.header("Authorization", authHeaderValue)
 				.content(objectMapper.writeValueAsString(invoice))
 				.accept(MediaType.APPLICATION_JSON)
 				.contentType(MediaType.APPLICATION_JSON))
@@ -596,6 +627,7 @@ public class InvoiceServiceTest {
 		Assert.isTrue(invoiceCreateResult.getAmount()==25, "Test failed while creating invoice");
 		
 		result = mvc.perform(MockMvcRequestBuilders.get("/invoice")
+				.header("Authorization", authHeaderValue)
 				.accept(MediaType.APPLICATION_JSON)
 				.contentType(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk())
@@ -636,6 +668,7 @@ public class InvoiceServiceTest {
 		invoice.addItem(item2);
 
 		MvcResult result = mvc.perform(post("/invoice")
+				.header("Authorization", authHeaderValue)
 				.content(objectMapper.writeValueAsString(invoice))
 				.accept(MediaType.APPLICATION_JSON)
 				.contentType(MediaType.APPLICATION_JSON))
@@ -650,6 +683,7 @@ public class InvoiceServiceTest {
 		Assert.isTrue(invoiceCreateResult.getAmount()==25, "Test failed while creating invoice");
 		
 		result = mvc.perform(MockMvcRequestBuilders.get("/invoice/customer").param("id", "1")
+				.header("Authorization", authHeaderValue)
 				.accept(MediaType.APPLICATION_JSON)
 				.contentType(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk())

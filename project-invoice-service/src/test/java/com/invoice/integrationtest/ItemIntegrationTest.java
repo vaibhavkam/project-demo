@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.invoice.service;
+package com.invoice.integrationtest;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -10,6 +10,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.util.Date;
 import java.util.List;
 
+import org.apache.commons.codec.binary.Base64;
+import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +21,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
+import org.springframework.core.env.Environment;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -31,6 +35,8 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.invoice.Boot;
 import com.invoice.repository.ItemRepository;
+import com.invoice.service.ItemService;
+import com.invoice.service.ItemServiceImpl;
 import com.model.transaction.Invoice;
 import com.model.transaction.Item;
 import com.model.user.Customer;
@@ -47,7 +53,7 @@ import com.model.util.ResponseType;
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT,classes = Boot.class)
 @AutoConfigureMockMvc
 @TestPropertySource(locations = "classpath:application-integrationtest.properties")
-public class ItemServiceTest {
+public class ItemIntegrationTest {
 	
     @TestConfiguration
     static class ItemServiceImplTestContextConfiguration {
@@ -62,15 +68,22 @@ public class ItemServiceTest {
 	private MockMvc mvc;
 	
 	@Autowired
-	private ItemService itemService;
-
-	@Autowired
 	ItemRepository itemRepository;
 
     @Autowired
     ObjectMapper objectMapper;
-    
-    private Invoice invoice;
+        
+    @Autowired
+    private Environment env;
+            
+    public static String authHeaderValue;
+
+    @Before
+    public void setUp(){
+    	
+    	authHeaderValue = "Basic " + new String(Base64.encodeBase64((env.getProperty("validConsumerUserName")+":"+env.getProperty("validConsumerPassword")).getBytes()));
+    }
+
     
 	@Test
 	public void testCreateItem() throws Exception{
@@ -83,6 +96,7 @@ public class ItemServiceTest {
 		item.setDescription("Item1");		
 
 		MvcResult result = mvc.perform(post("/item")
+				.header("Authorization", authHeaderValue)
 				.content(objectMapper.writeValueAsString(item))
 				.accept(MediaType.APPLICATION_JSON)
 				.contentType(MediaType.APPLICATION_JSON))
@@ -104,6 +118,7 @@ public class ItemServiceTest {
 		item.setDescription("Item1");
 		
 		MvcResult result = mvc.perform(post("/item")
+				.header("Authorization", authHeaderValue)
 				.content(objectMapper.writeValueAsString(item))
 				.accept(MediaType.APPLICATION_JSON)
 				.contentType(MediaType.APPLICATION_JSON))
@@ -126,6 +141,7 @@ public class ItemServiceTest {
 		item.setDescription("Item1");
 		
 		MvcResult result = mvc.perform(post("/item")
+				.header("Authorization", authHeaderValue)
 				.content(objectMapper.writeValueAsString(item))
 				.accept(MediaType.APPLICATION_JSON)
 				.contentType(MediaType.APPLICATION_JSON))
@@ -138,6 +154,7 @@ public class ItemServiceTest {
 		Assert.isTrue(itemCreateResult.getId()>0, "Test failed while creating item");
 		
 		result = mvc.perform(MockMvcRequestBuilders.get("/item/{id}", itemCreateResult.getId())
+				.header("Authorization", authHeaderValue)
 				.accept(MediaType.APPLICATION_JSON)
 				.contentType(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk())
@@ -154,6 +171,7 @@ public class ItemServiceTest {
 	public void testReadItemForNonExistingId() throws Exception{
 				
 		MvcResult result = mvc.perform(MockMvcRequestBuilders.get("/item/{id}", new Long(1000))
+				.header("Authorization", authHeaderValue)
 				.accept(MediaType.APPLICATION_JSON)
 				.contentType(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk())
@@ -174,6 +192,7 @@ public class ItemServiceTest {
 		item.setDescription("Item1");
 
 		MvcResult result = mvc.perform(post("/item")
+				.header("Authorization", authHeaderValue)
 				.content(objectMapper.writeValueAsString(item))
 				.accept(MediaType.APPLICATION_JSON)
 				.contentType(MediaType.APPLICATION_JSON))
@@ -189,6 +208,7 @@ public class ItemServiceTest {
 		itemCreateResult.setDescription("Item1_Updated");
 		
 		result = mvc.perform(put("/item")
+				.header("Authorization", authHeaderValue)
 				.content(objectMapper.writeValueAsString(itemCreateResult))
 				.accept(MediaType.APPLICATION_JSON)
 				.contentType(MediaType.APPLICATION_JSON))
@@ -203,6 +223,7 @@ public class ItemServiceTest {
 		Assert.isTrue(itemCreateResult.getDescription().equalsIgnoreCase("Item1_Updated"), "Test failed due to expcetd and actual description mis-match");
 		
 		result = mvc.perform(MockMvcRequestBuilders.get("/item/{id}", itemUpdateResult.getId())
+				.header("Authorization", authHeaderValue)
 				.accept(MediaType.APPLICATION_JSON)
 				.contentType(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk())
@@ -227,6 +248,7 @@ public class ItemServiceTest {
 		item.setDescription("Item1");
 
 		MvcResult result = mvc.perform(post("/item")
+				.header("Authorization", authHeaderValue)
 				.content(objectMapper.writeValueAsString(item))
 				.accept(MediaType.APPLICATION_JSON)
 				.contentType(MediaType.APPLICATION_JSON))
@@ -242,6 +264,7 @@ public class ItemServiceTest {
 		itemCreateResult.setCreatedDate(null);
 		
 		result = mvc.perform(put("/item")
+				.header("Authorization", authHeaderValue)
 				.content(objectMapper.writeValueAsString(itemCreateResult))
 				.accept(MediaType.APPLICATION_JSON)
 				.contentType(MediaType.APPLICATION_JSON))
@@ -253,6 +276,7 @@ public class ItemServiceTest {
 		Assert.isTrue(response.getResponseCode().equals(ResponseCode.VALIDATION_ERROR),"Validation failed while creating item with null name");
 		
 		result = mvc.perform(MockMvcRequestBuilders.get("/item/{id}", itemCreateResult.getId())
+				.header("Authorization", authHeaderValue)
 				.accept(MediaType.APPLICATION_JSON)
 				.contentType(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk())
@@ -277,6 +301,7 @@ public class ItemServiceTest {
 		item.setDescription("Item1");
 
 		MvcResult result = mvc.perform(post("/item")
+				.header("Authorization", authHeaderValue)
 				.content(objectMapper.writeValueAsString(item))
 				.accept(MediaType.APPLICATION_JSON)
 				.contentType(MediaType.APPLICATION_JSON))
@@ -290,6 +315,7 @@ public class ItemServiceTest {
 		Assert.isTrue(itemCreateResult.getId()>0, "Test failed while creating item");
 				
 		result = mvc.perform(MockMvcRequestBuilders.delete("/item/{id}", itemCreateResult.getId())
+				.header("Authorization", authHeaderValue)
 				.accept(MediaType.APPLICATION_JSON)
 				.contentType(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk())
@@ -300,6 +326,7 @@ public class ItemServiceTest {
 		Assert.isTrue(response.getResponseCode().equals(ResponseCode.DELETE_SUCCESS),"Validation failed while deleteing item");
 		
 		result = mvc.perform(MockMvcRequestBuilders.get("/item/{id}", itemCreateResult.getId())
+				.header("Authorization", authHeaderValue)
 				.accept(MediaType.APPLICATION_JSON)
 				.contentType(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk())
@@ -314,6 +341,7 @@ public class ItemServiceTest {
 	public void testDeeleteItemForNonExistingId() throws Exception{
 		
 		MvcResult result = mvc.perform(MockMvcRequestBuilders.delete("/item/{id}", new Long(1000))
+				.header("Authorization", authHeaderValue)
 				.accept(MediaType.APPLICATION_JSON)
 				.contentType(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk())
@@ -336,6 +364,7 @@ public class ItemServiceTest {
 		item1.setDescription("Item1");
 
 		MvcResult result = mvc.perform(post("/item")
+				.header("Authorization", authHeaderValue)
 				.content(objectMapper.writeValueAsString(item1))
 				.accept(MediaType.APPLICATION_JSON)
 				.contentType(MediaType.APPLICATION_JSON))
@@ -353,6 +382,7 @@ public class ItemServiceTest {
 		item2.setDescription("Item2");
 
 		result = mvc.perform(post("/item")
+				.header("Authorization", authHeaderValue)
 				.content(objectMapper.writeValueAsString(item2))
 				.accept(MediaType.APPLICATION_JSON)
 				.contentType(MediaType.APPLICATION_JSON))
@@ -365,6 +395,7 @@ public class ItemServiceTest {
 		Assert.isTrue(itemCreateResult2.getId()>0, "Test failed while creating item");
 
 		result = mvc.perform(MockMvcRequestBuilders.get("/item")
+				.header("Authorization", authHeaderValue)
 				.accept(MediaType.APPLICATION_JSON)
 				.contentType(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk())
@@ -406,6 +437,7 @@ public class ItemServiceTest {
 		invoice.addItem(item2);
 		
 		MvcResult result = mvc.perform(post("/invoice")
+				.header("Authorization", authHeaderValue)
 				.content(objectMapper.writeValueAsString(invoice))
 				.accept(MediaType.APPLICATION_JSON)
 				.contentType(MediaType.APPLICATION_JSON))
@@ -420,6 +452,7 @@ public class ItemServiceTest {
 		Assert.isTrue(invoiceResult.getAmount()==25, "Test failed while creating invoice");
 		
 		result = mvc.perform(MockMvcRequestBuilders.get("/item/invoice").param("id", invoiceResult.getId().toString())
+				.header("Authorization", authHeaderValue)
 				.accept(MediaType.APPLICATION_JSON)
 				.contentType(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk())
